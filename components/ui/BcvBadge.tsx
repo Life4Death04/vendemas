@@ -6,16 +6,20 @@ import { useToast } from '@/context/ToastContext';
 import { formatRelativeTime } from '@/lib/utils';
 
 export function BcvBadge() {
-  const { bcv, setBcv } = useStore();
+  const { bcv, refreshBcv } = useStore();
   const { showToast }   = useToast();
   const [loading, setLoading] = useState(false);
 
   const refresh = async () => {
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1200)); // mock delay
-    setBcv({ ...bcv, updatedAt: new Date(), isStale: false });
-    showToast('Tasa BCV actualizada', 'success');
-    setLoading(false);
+    try {
+      await refreshBcv();
+      showToast('Tasa BCV actualizada', 'success');
+    } catch {
+      showToast('Sin conexión · Usando última tasa guardada', 'warning');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

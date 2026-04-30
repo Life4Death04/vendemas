@@ -1,50 +1,92 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import type { Product, Sale, Settings, BcvState, Unit } from '@/lib/types';
-import { MOCK_BCV, MOCK_PRODUCTS, MOCK_SALES, MOCK_SETTINGS } from '@/lib/mock-data';
+import {
+  createContext, useContext, useState, useEffect,
+  useCallback, type ReactNode,
+} from 'react';
+import type { Product, Sale, Settings, BcvState } from '@/lib/types';
+import * as api from '@/lib/api-client';
 
 interface StoreContextValue {
-  bcv: BcvState;
-  settings: Settings;
-  products: Product[];
-  sales: Sale[];
-  setBcv: (bcv: BcvState) => void;
-  setSettings: (s: Settings) => void;
-  addProduct: (data: Omit<Product, 'id' | 'createdAt'>) => void;
-  updateProduct: (id: number, data: Partial<Omit<Product, 'id' | 'createdAt'>>) => void;
-  deleteProduct: (id: number) => void;
-  addSale: (data: Omit<Sale, 'id'>) => void;
+  // State
+  bcv:         BcvState;
+  settings:    Settings;
+  products:    Product[];
+  sales:       Sale[];
+  loading:     boolean;
+
+  // Mutations
+  refreshBcv:     () => Promise<void>;
+  saveSettings:   (s: Partial<Settings>) => Promise<void>;
+  addProduct:     (data: Omit<Product, 'id' | 'createdAt'>) => Promise<void>;
+  editProduct:    (id: number, data: Partial<Omit<Product, 'id' | 'createdAt'>>) => Promise<void>;
+  removeProduct:  (id: number) => Promise<void>;
+  addSale:        (data: Omit<Sale, 'id'>) => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
-let nextId = 100;
+const FALLBACK_BCV: BcvState = { rate: 1, updatedAt: new Date(), isStale: true };
+const FALLBACK_SETTINGS: Settings = { generalProfit: 20 };
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [bcv, setBcv]           = useState<BcvState>(MOCK_BCV);
-  const [settings, setSettings] = useState<Settings>(MOCK_SETTINGS);
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
-  const [sales, setSales]       = useState<Sale[]>(MOCK_SALES);
+  const [bcv,      setBcv]      = useState<BcvState>(FALLBACK_BCV);
+  const [settings, setSettings] = useState<Settings>(FALLBACK_SETTINGS);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [sales,    setSales]    = useState<Sale[]>([]);
+  const [loading,  setLoading]  = useState(true);
 
-  const addProduct = useCallback((data: Omit<Product, 'id' | 'createdAt'>) => {
-    setProducts(prev => [{ ...data, id: ++nextId, createdAt: new Date() }, ...prev]);
+  // Load everything in parallel on mount
+  useEffect(() => {
+    Promise.all([
+      api.fetchBcvRate().catch(() => FALLBACK_BCV),
+      api.fetchSettings().catch(() => FALLBACK_SETTINGS),
+      api.fetchProducts().catch(() => []),
+      api.fetchSales().catch(() => []),
+    ]).then(([bcvData, settingsData, productsData, salesData]) => {
+      setBcv(bcvData);
+      setSettings(settingsData);
+      setProducts(productsData);
+      setSales(salesData);
+      setLoading(false);
+    });
   }, []);
 
-  const updateProduct = useCallback((id: number, data: Partial<Omit<Product, 'id' | 'createdAt'>>) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
+  const refreshBcv = useCallback(async () => {
+    const data = await api.fetchBcvRate();
+    setBcv(data);
   }, []);
 
-  const deleteProduct = useCallback((id: number) => {
+  const saveSettings = useCallback(async (partial: Partial<Settings>) => {
+    const updated = await api.updateSettings(partial);
+    setSettings(updated);
+  }, []);
+
+  const addProduct = useCallback(async (data: Omit<Product, 'id' | 'createdAt'>) => {
+    const created = await api.createProduct(data);
+    setProducts(prev => [created, ...prev].sort((a, b) => a.name.localeCompare(b.name)));
+  }, []);
+
+  const editProduct = useCallback(async (id: number, data: Partial<Omit<Product, 'id' | 'createdAt'>>) => {
+    const updated = await api.updateProduct(id, data);
+    setProducts(prev => prev.map(p => p.id === id ? updated : p));
+  }, []);
+
+  const removeProduct = useCallback(async (id: number) => {
+    await api.deleteProduct(id);
     setProducts(prev => prev.filter(p => p.id !== id));
   }, []);
 
-  const addSale = useCallback((data: Omit<Sale, 'id'>) => {
-    setSales(prev => [{ ...data, id: ++nextId }, ...prev]);
+  const addSale = useCallback(async (data: Omit<Sale, 'id'>) => {
+    const created = await api.createSale(data);
+    setSales(prev => [created, ...prev]);
   }, []);
 
   return (
-    <StoreContext value={{ bcv, settings, products, sales, setBcv, setSettings, addProduct, updateProduct, deleteProduct, addSale }}>
+    <StoreContext value={{
+      bcv, settings, products, sales, loading,
+      refreshBcv, saveSettings, addProduct, editProduct, removeProduct, addSale,
+    }}>
       {children}
     </StoreContext>
   );
