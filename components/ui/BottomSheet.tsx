@@ -27,8 +27,8 @@ export function BottomSheet({ open, title, onClose, children }: BottomSheetProps
       />
       {/* Sheet */}
       <div
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-surface rounded-t-2xl z-[500] max-h-[92vh] overflow-y-auto"
-        style={{ animation: 'slideUp .3s cubic-bezier(.32,.72,0,1)' }}
+        className="fixed bottom-0  w-full max-w-[480px] bg-surface rounded-t-2xl z-[500] max-h-[92vh] overflow-y-auto"
+        style={{ animation: 'slide-up 0.3s cubic-bezier(.32,.72,0,1)' }}
       >
         {/* Handle */}
         <div className="w-10 h-1 bg-border rounded-full mx-auto mt-3.5 mb-5" />
