@@ -36,23 +36,27 @@ function CalculadoraContent() {
     return { baseBs, totalBs, totalUsd, profit, qtyBase };
   }, [product, qty, unit, bcv.rate, settings.generalProfit]);
 
-  function handleRegister() {
+  async function handleRegister() {
     if (!product || !result) return;
-    addSale({
-      productId:   product.id,
-      productName: product.name,
-      quantity:    Number(qty),
-      unit,
-      priceUsd:    product.priceUsd,
-      bcvRate:     bcv.rate,
-      profitBs:    result.profit,
-      totalBs:     result.totalBs,
-      totalUsd:    result.totalUsd,
-      soldAt:      new Date(),
-    });
-    showToast('Venta registrada', 'success');
-    setQty('');
-    setExpanded(false);
+    try {
+      await addSale({
+        productId:   product.id,
+        productName: product.name,
+        quantity:    Number(qty),
+        unit,
+        priceUsd:    product.priceUsd,
+        bcvRate:     bcv.rate,
+        profitBs:    result.profit,
+        totalBs:     result.totalBs,
+        totalUsd:    result.totalUsd,
+        soldAt:      new Date(),
+      });
+      showToast('Venta registrada', 'success');
+      setQty('');
+      setExpanded(false);
+    } catch {
+      showToast('Error al registrar la venta', 'error');
+    }
   }
 
   return (

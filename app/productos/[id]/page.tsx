@@ -13,9 +13,10 @@ import type { Product }  from '@/lib/types';
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id }   = use(params);
   const router   = useRouter();
-  const { products, bcv, settings, updateProduct } = useStore();
+  const { products, bcv, settings, editProduct } = useStore();
   const { showToast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
+  const [saving,   setSaving]   = useState(false);
 
   const product = products.find(p => p.id === Number(id));
 
@@ -34,22 +35,31 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const profit   = getProfit(product, settings.generalProfit);
-  const conv     = product.priceUsd * bcv.rate;
-  const priceBs  = calcPriceBs(product, bcv.rate, settings.generalProfit);
-  const priceUsd = calcPriceUsd(product, bcv.rate, settings.generalProfit);
-  const hasCustom = product.customProfit != null;
+  // product is defined here — the undefined case returned early above
+  const p        = product!;
+  const profit   = getProfit(p, settings.generalProfit);
+  const conv     = p.priceUsd * bcv.rate;
+  const priceBs  = calcPriceBs(p, bcv.rate, settings.generalProfit);
+  const priceUsd = calcPriceUsd(p, bcv.rate, settings.generalProfit);
+  const hasCustom = p.customProfit != null;
 
-  function handleSave(data: Omit<Product, 'id' | 'createdAt'>) {
-    updateProduct(product.id, data);
-    showToast('Producto actualizado', 'success');
-    setEditOpen(false);
+  async function handleSave(data: Omit<Product, 'id' | 'createdAt'>) {
+    setSaving(true);
+    try {
+      await editProduct(p.id, data);
+      showToast('Producto actualizado', 'success');
+      setEditOpen(false);
+    } catch (e: unknown) {
+      showToast((e as Error).message ?? 'Error al guardar', 'error');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <>
       <PageHeader
-        title={product.name}
+        title={p.name}
         showBack
         right={
           <button onClick={() => setEditOpen(true)} className="flex items-center justify-center w-11 h-11">
@@ -73,7 +83,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-1">Cómo se calculó</p>
 
           {[
-            { label: 'Precio base',  value: formatUsd(product.priceUsd) },
+            { label: 'Precio base',  value: formatUsd(p.priceUsd) },
             { label: 'Tasa BCV',     value: `× ${bcv.rate.toFixed(2)} Bs/$` },
             { label: 'Conversión',   value: formatBs(conv) },
             { label: 'Ganancia',     value: `+ ${profit.toFixed(2)} Bs`, green: true },
@@ -96,8 +106,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         <div className="bg-surface border border-border rounded-xl p-4">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-1">Información del producto</p>
           {[
-            { label: 'Unidad de medida', value: product.unit },
-            { label: 'Precio base',      value: `${formatUsd(product.priceUsd)} / ${product.unit}` },
+            { label: 'Unidad de medida', value: p.unit },
+            { label: 'Precio base',      value: `${formatUsd(p.priceUsd)} / ${p.unit}` },
           ].map(row => (
             <div key={row.label} className="flex items-center justify-between py-3 border-b border-border last:border-none">
               <span className="text-[15px] text-muted">{row.label}</span>
@@ -119,7 +129,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
         {/* CTA */}
         <button
-          onClick={() => router.push(`/calcular?productId=${product.id}`)}
+          onClick={() => router.push(`/calcular?productId=${p.id}`)}
           className="w-full h-[52px] bg-primary text-white rounded-xl text-base font-semibold flex items-center justify-center gap-2 mb-2"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -131,11 +141,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
       <BottomSheet open={editOpen} title="Editar producto" onClose={() => setEditOpen(false)}>
         <ProductForm
-          product={product}
+          product={p}
           bcvRate={bcv.rate}
           generalProfit={settings.generalProfit}
           onSave={handleSave}
           onCancel={() => setEditOpen(false)}
+          saving={saving}
         />
       </BottomSheet>
     </>
