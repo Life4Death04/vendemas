@@ -146,17 +146,23 @@ function CalculadoraContent() {
             {expanded && (
               <div className="bg-surface border border-border rounded-xl p-4 mb-3 animate-fade-in">
                 {[
-                  { label: 'Precio base',                    value: formatUsd(product?.priceUsd ?? 0) },
-                  { label: `Ganancia / ${product?.unit}`,    value: `+ ${formatUsd(result.profitUsd)}`, green: true },
-                  { label: 'Precio venta unitario',          value: formatUsd((product?.priceUsd ?? 0) + result.profitUsd) },
-                  { label: 'Cantidad',                       value: `${qty} ${unit}` },
-                  { label: 'Total',                          value: formatUsd(result.totalUsd) },
+                  { label: 'Precio base',                 value: formatUsd(product?.priceUsd ?? 0) },
+                  { label: `Ganancia / ${product?.unit}`, value: `+ ${formatUsd(result.profitUsd)}`, green: true },
+                  { label: 'Precio venta unitario',       value: formatUsd((product?.priceUsd ?? 0) + result.profitUsd) },
+                  { label: 'Cantidad',                    value: `${qty} ${unit}` },
+                  { label: 'Total',                       value: formatUsd(result.totalUsd) },
                 ].map(row => (
                   <div key={row.label} className="flex justify-between py-2.5 border-b border-border last:border-none">
                     <span className="text-sm text-muted">{row.label}</span>
                     <span className={`text-sm font-semibold ${row.green ? 'text-price' : 'text-text'}`}>{row.value}</span>
                   </div>
                 ))}
+
+                {/* Total profit highlight */}
+                <div className="flex justify-between items-center mt-3 pt-3 border-t-2 border-border">
+                  <span className="text-sm font-bold text-text">Ganancia total</span>
+                  <span className="text-base font-extrabold text-[#059669]">+ {formatUsd(result.profitTotal)}</span>
+                </div>
               </div>
             )}
 
