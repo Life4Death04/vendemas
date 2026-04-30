@@ -12,9 +12,10 @@ interface ProductFormProps {
   generalProfit: number;
   onSave: (data: Omit<Product, 'id' | 'createdAt'>) => void;
   onCancel: () => void;
+  saving?: boolean;
 }
 
-export function ProductForm({ product, bcvRate, generalProfit, onSave, onCancel }: ProductFormProps) {
+export function ProductForm({ product, bcvRate, generalProfit, onSave, onCancel, saving = false }: ProductFormProps) {
   const [name,         setName]         = useState(product?.name         ?? '');
   const [priceUsd,     setPriceUsd]     = useState(product?.priceUsd?.toString() ?? '');
   const [unit,         setUnit]         = useState<Unit>(product?.unit   ?? 'kg');
@@ -133,8 +134,13 @@ export function ProductForm({ product, bcvRate, generalProfit, onSave, onCancel 
         )}
       </div>
 
-      <button type="submit" className="w-full h-[52px] bg-primary text-white rounded-xl text-base font-semibold mb-2">
-        Guardar
+      <button
+        type="submit"
+        disabled={saving}
+        className="w-full h-[52px] bg-primary text-white rounded-xl text-base font-semibold mb-2 flex items-center justify-center gap-2 disabled:opacity-70"
+      >
+        {saving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin-custom" />}
+        {saving ? 'Guardando...' : 'Guardar'}
       </button>
       <button type="button" onClick={onCancel} className="w-full h-12 text-base font-medium text-muted">
         Cancelar

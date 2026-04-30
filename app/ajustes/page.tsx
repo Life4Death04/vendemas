@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { formatRelativeTime } from '@/lib/utils';
 
 export default function AjustesPage() {
-  const { settings, setSettings, bcv, setBcv } = useStore();
+  const { settings, saveSettings, bcv, refreshBcv } = useStore();
   const { showToast } = useToast();
 
   const [profitValue, setProfitValue] = useState(settings.generalProfit.toString());
@@ -15,7 +15,7 @@ export default function AjustesPage() {
   const [profitShake, setProfitShake] = useState(false);
   const [refreshing,  setRefreshing]  = useState(false);
 
-  function handleSaveProfit() {
+  async function handleSaveProfit() {
     const val = parseFloat(profitValue);
     if (!val || val <= 0) {
       setProfitError('La ganancia debe ser mayor a 0');
@@ -24,16 +24,24 @@ export default function AjustesPage() {
       return;
     }
     setProfitError('');
-    setSettings({ ...settings, generalProfit: val });
-    showToast('Ganancia actualizada · Precios recalculados', 'success');
+    try {
+      await saveSettings({ generalProfit: val });
+      showToast('Ganancia actualizada · Precios recalculados', 'success');
+    } catch (e: unknown) {
+      showToast((e as Error).message ?? 'Error al guardar', 'error');
+    }
   }
 
   async function handleRefreshBcv() {
     setRefreshing(true);
-    await new Promise(r => setTimeout(r, 1400));
-    setBcv({ ...bcv, updatedAt: new Date(), isStale: false });
-    showToast('Tasa BCV actualizada', 'success');
-    setRefreshing(false);
+    try {
+      await refreshBcv();
+      showToast('Tasa BCV actualizada', 'success');
+    } catch {
+      showToast('Sin conexión · Usando última tasa guardada', 'warning');
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   return (
