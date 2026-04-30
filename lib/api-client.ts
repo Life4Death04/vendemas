@@ -20,9 +20,10 @@ interface DbSale {
   unit: Unit;
   price_usd: number;
   bcv_rate: number;
-  profit_bs: number;
+  profit_usd: number;
   total_bs: number;
   total_usd: number;
+  customer_name: string | null;
   sold_at: string;
 }
 
@@ -45,17 +46,18 @@ function mapProduct(r: DbProduct): Product {
 
 function mapSale(r: DbSale): Sale {
   return {
-    id:          r.id,
-    productId:   r.product_id,
-    productName: r.product_name,
-    quantity:    r.quantity,
-    unit:        r.unit,
-    priceUsd:    r.price_usd,
-    bcvRate:     r.bcv_rate,
-    profitBs:    r.profit_bs,
-    totalBs:     r.total_bs,
-    totalUsd:    r.total_usd,
-    soldAt:      new Date(r.sold_at),
+    id:           r.id,
+    productId:    r.product_id,
+    productName:  r.product_name,
+    quantity:     r.quantity,
+    unit:         r.unit,
+    priceUsd:     r.price_usd,
+    bcvRate:      r.bcv_rate,
+    profitUsd:    r.profit_usd,
+    totalBs:      r.total_bs,
+    totalUsd:     r.total_usd,
+    customerName: r.customer_name,
+    soldAt:       new Date(r.sold_at),
   };
 }
 
@@ -117,15 +119,16 @@ export async function createSale(data: Omit<Sale, 'id'>): Promise<Sale> {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({
-      product_id:   data.productId,
-      product_name: data.productName,
-      quantity:     data.quantity,
-      unit:         data.unit,
-      price_usd:    data.priceUsd,
-      bcv_rate:     data.bcvRate,
-      profit_bs:    data.profitBs,
-      total_bs:     data.totalBs,
-      total_usd:    data.totalUsd,
+      product_id:    data.productId,
+      product_name:  data.productName,
+      quantity:      data.quantity,
+      unit:          data.unit,
+      price_usd:     data.priceUsd,
+      bcv_rate:      data.bcvRate,
+      profit_usd:    data.profitUsd,
+      total_bs:      data.totalBs,
+      total_usd:     data.totalUsd,
+      customer_name: data.customerName,
     }),
   });
   if (!res.ok) throw new Error('Error al registrar venta');

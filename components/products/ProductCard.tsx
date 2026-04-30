@@ -15,7 +15,7 @@ interface ProductCardProps {
 export function ProductCard({ product, bcvRate, generalProfit, onEdit, onDelete }: ProductCardProps) {
   const router     = useRouter();
   const priceBs    = calcPriceBs(product, bcvRate, generalProfit);
-  const priceUsd   = calcPriceUsd(product, bcvRate, generalProfit);
+  const priceUsd   = calcPriceUsd(product, generalProfit);
   const profit     = getProfit(product, generalProfit);
   const hasCustom  = product.customProfit != null;
 
@@ -32,7 +32,7 @@ export function ProductCard({ product, bcvRate, generalProfit, onEdit, onDelete 
 
         {hasCustom && (
           <span className="inline-flex items-center mt-2 px-2 py-0.5 rounded-full text-xs font-medium bg-warn-light text-warn-text">
-            Ganancia propia: {profit} Bs
+            Ganancia propia: ${profit}
           </span>
         )}
       </div>

@@ -49,13 +49,13 @@ export function getProfit(product: Product, generalProfit: number): number {
   return product.customProfit ?? generalProfit;
 }
 
-export function calcPriceBs(product: Product, bcvRate: number, generalProfit: number, quantity = 1): number {
-  const profit = getProfit(product, generalProfit);
-  return product.priceUsd * quantity * bcvRate + profit;
+export function calcPriceUsd(product: Product, generalProfit: number, quantity = 1): number {
+  const profitUsd = getProfit(product, generalProfit);
+  return (product.priceUsd + profitUsd) * quantity;
 }
 
-export function calcPriceUsd(product: Product, bcvRate: number, generalProfit: number, quantity = 1): number {
-  return calcPriceBs(product, bcvRate, generalProfit, quantity) / bcvRate;
+export function calcPriceBs(product: Product, bcvRate: number, generalProfit: number, quantity = 1): number {
+  return calcPriceUsd(product, generalProfit, quantity) * bcvRate;
 }
 
 // Unit conversion: converts `value` in `fromUnit` to the product's base unit

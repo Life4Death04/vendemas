@@ -7,7 +7,7 @@ export async function GET() {
   const db    = getDb();
   const sales = db.prepare(
     `SELECT id, product_id, product_name, quantity, unit,
-            price_usd, bcv_rate, profit_bs, total_bs, total_usd, sold_at
+            price_usd, bcv_rate, profit_usd, total_bs, total_usd, customer_name, sold_at
      FROM sales
      ORDER BY sold_at DESC`
   ).all();
@@ -18,7 +18,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
 
-  const required = ['product_name', 'quantity', 'unit', 'price_usd', 'bcv_rate', 'profit_bs', 'total_bs', 'total_usd'];
+  const required = ['product_name', 'quantity', 'unit', 'price_usd', 'bcv_rate', 'profit_usd', 'total_bs', 'total_usd'];
   for (const field of required) {
     if (body?.[field] == null) return err(`Campo requerido: ${field}`);
   }
@@ -26,19 +26,20 @@ export async function POST(req: NextRequest) {
   const db     = getDb();
   const result = db.prepare(
     `INSERT INTO sales
-       (product_id, product_name, quantity, unit, price_usd, bcv_rate, profit_bs, total_bs, total_usd)
+       (product_id, product_name, quantity, unit, price_usd, bcv_rate, profit_usd, total_bs, total_usd, customer_name)
      VALUES
-       (@product_id, @product_name, @quantity, @unit, @price_usd, @bcv_rate, @profit_bs, @total_bs, @total_usd)`
+       (@product_id, @product_name, @quantity, @unit, @price_usd, @bcv_rate, @profit_usd, @total_bs, @total_usd, @customer_name)`
   ).run({
-    product_id:   body.product_id   ?? null,
-    product_name: body.product_name,
-    quantity:     body.quantity,
-    unit:         body.unit,
-    price_usd:    body.price_usd,
-    bcv_rate:     body.bcv_rate,
-    profit_bs:    body.profit_bs,
-    total_bs:     body.total_bs,
-    total_usd:    body.total_usd,
+    product_id:    body.product_id   ?? null,
+    product_name:  body.product_name,
+    quantity:      body.quantity,
+    unit:          body.unit,
+    price_usd:     body.price_usd,
+    bcv_rate:      body.bcv_rate,
+    profit_usd:    body.profit_usd,
+    total_bs:      body.total_bs,
+    total_usd:     body.total_usd,
+    customer_name: body.customer_name ?? null,
   });
 
   const created = db.prepare('SELECT * FROM sales WHERE id = ?').get(result.lastInsertRowid);

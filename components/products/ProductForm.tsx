@@ -23,10 +23,10 @@ export function ProductForm({ product, bcvRate, generalProfit, onSave, onCancel,
   const [errors,       setErrors]       = useState<Record<string, string>>({});
   const [shake,        setShake]        = useState<string | null>(null);
 
-  const priceNum   = parseFloat(priceUsd)   || 0;
+  const priceNum   = parseFloat(priceUsd)    || 0;
   const profitNum  = parseFloat(customProfit) || generalProfit;
-  const previewBs  = priceNum > 0 ? (priceNum * bcvRate) + profitNum : 0;
-  const previewUsd = previewBs > 0 ? previewBs / bcvRate : 0;
+  const previewUsd = priceNum > 0 ? priceNum + profitNum : 0;
+  const previewBs  = previewUsd > 0 ? previewUsd * bcvRate : 0;
 
   function triggerShake(field: string) {
     setShake(field);
@@ -113,19 +113,19 @@ export function ProductForm({ product, bcvRate, generalProfit, onSave, onCancel,
           <span className="text-xs font-normal text-muted">(opcional)</span>
         </label>
         <div className="relative">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-semibold text-muted pointer-events-none">$</span>
           <input
             type="number"
             value={customProfit}
             onChange={e => setCustomProfit(e.target.value)}
-            placeholder={`Dejar vacío para usar ${generalProfit} Bs`}
+            placeholder={`Dejar vacío para usar $${generalProfit}`}
             min="0"
-            step="0.5"
+            step="0.01"
             inputMode="decimal"
-            className="w-full h-[52px] px-3.5 pr-10 rounded-xl border-[1.5px] border-border text-base outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,86,219,.12)] transition-all"
+            className="w-full h-[52px] pl-7 pr-3.5 rounded-xl border-[1.5px] border-border text-base outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,86,219,.12)] transition-all"
           />
-          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-base font-semibold text-muted pointer-events-none">Bs</span>
         </div>
-        <p className="text-[13px] text-muted mt-1">Si se deja vacío se aplica la ganancia general ({generalProfit} Bs)</p>
+        <p className="text-[13px] text-muted mt-1">Si se deja vacío se aplica la ganancia general (${generalProfit})</p>
 
         {previewBs > 0 && (
           <div className="mt-2 px-3 py-2 rounded-lg bg-price-light border border-price-border text-sm font-semibold text-price">

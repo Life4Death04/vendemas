@@ -36,11 +36,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   }
 
   // product is defined here — the undefined case returned early above
-  const p        = product!;
-  const profit   = getProfit(p, settings.generalProfit);
-  const conv     = p.priceUsd * bcv.rate;
-  const priceBs  = calcPriceBs(p, bcv.rate, settings.generalProfit);
-  const priceUsd = calcPriceUsd(p, bcv.rate, settings.generalProfit);
+  const p         = product!;
+  const profitUsd = getProfit(p, settings.generalProfit);
+  const priceUsd  = calcPriceUsd(p, settings.generalProfit);
+  const priceBs   = calcPriceBs(p, bcv.rate, settings.generalProfit);
   const hasCustom = p.customProfit != null;
 
   async function handleSave(data: Omit<Product, 'id' | 'createdAt'>) {
@@ -84,9 +83,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
           {[
             { label: 'Precio base',  value: formatUsd(p.priceUsd) },
+            { label: 'Ganancia',     value: `+ ${formatUsd(profitUsd)} / ${p.unit}`, green: true },
+            { label: 'Precio venta', value: formatUsd(priceUsd) },
             { label: 'Tasa BCV',     value: `× ${bcv.rate.toFixed(2)} Bs/$` },
-            { label: 'Conversión',   value: formatBs(conv) },
-            { label: 'Ganancia',     value: `+ ${profit.toFixed(2)} Bs`, green: true },
           ].map(row => (
             <div key={row.label} className="flex items-center justify-between py-3 border-b border-border last:border-none">
               <span className="text-[15px] text-muted">{row.label}</span>
@@ -117,7 +116,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex items-center justify-between py-3">
             <span className="text-[15px] text-muted">Ganancia aplicada</span>
             <div className="flex items-center gap-2">
-              <span className="text-[15px] font-semibold text-text">{profit} Bs</span>
+              <span className="text-[15px] font-semibold text-text">{formatUsd(profitUsd)}</span>
               {hasCustom ? (
                 <span className="text-xs bg-warn-light text-warn-text px-2 py-0.5 rounded-full">personalizada</span>
               ) : (
