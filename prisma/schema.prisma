@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  name         String
+  priceUsd     Float    @map("price_usd")
+  customProfit Float?   @map("custom_profit")
+  unit         String   @default("kg")
+  createdAt    DateTime @default(now()) @map("created_at")
+  sales        Sale[]
+
+  @@map("products")
+}
+
+model Sale {
+  id           Int      @id @default(autoincrement())
+  productId    Int?     @map("product_id")
+  productName  String   @map("product_name")
+  quantity     Float
+  unit         String
+  priceUsd     Float    @map("price_usd")
+  bcvRate      Float    @map("bcv_rate")
+  profitUsd    Float    @map("profit_usd")
+  totalBs      Float    @map("total_bs")
+  totalUsd     Float    @map("total_usd")
+  customerName String?  @map("customer_name")
+  soldAt       DateTime @default(now()) @map("sold_at")
+  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("sales")
+}
+
+model Settings {
+  key   String @id
+  value String
+
+  @@map("settings")
+}
+
+model BcvCache {
+  id        Int      @id
+  rate      Float
+  fetchedAt DateTime @map("fetched_at")
+
+  @@map("bcv_cache")
+}
