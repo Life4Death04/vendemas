@@ -1,16 +1,10 @@
 import { NextRequest } from 'next/server';
-import { getDb }       from '@/lib/db';
+import { prisma }      from '@/lib/prisma';
 import { ok, err }     from '@/lib/api-helpers';
 
 // GET /api/sales — list all sales ordered by date desc
 export async function GET() {
-  const db    = getDb();
-  const sales = db.prepare(
-    `SELECT id, product_id, product_name, quantity, unit,
-            price_usd, bcv_rate, profit_usd, total_bs, total_usd, customer_name, sold_at
-     FROM sales
-     ORDER BY sold_at DESC`
-  ).all();
+  const sales = await prisma.sale.findMany({ orderBy: { soldAt: 'desc' } });
   return ok(sales);
 }
 
@@ -18,30 +12,25 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
 
-  const required = ['product_name', 'quantity', 'unit', 'price_usd', 'bcv_rate', 'profit_usd', 'total_bs', 'total_usd'];
+  const required = ['productName', 'quantity', 'unit', 'priceUsd', 'bcvRate', 'profitUsd', 'totalBs', 'totalUsd'];
   for (const field of required) {
     if (body?.[field] == null) return err(`Campo requerido: ${field}`);
   }
 
-  const db     = getDb();
-  const result = db.prepare(
-    `INSERT INTO sales
-       (product_id, product_name, quantity, unit, price_usd, bcv_rate, profit_usd, total_bs, total_usd, customer_name)
-     VALUES
-       (@product_id, @product_name, @quantity, @unit, @price_usd, @bcv_rate, @profit_usd, @total_bs, @total_usd, @customer_name)`
-  ).run({
-    product_id:    body.product_id   ?? null,
-    product_name:  body.product_name,
-    quantity:      body.quantity,
-    unit:          body.unit,
-    price_usd:     body.price_usd,
-    bcv_rate:      body.bcv_rate,
-    profit_usd:    body.profit_usd,
-    total_bs:      body.total_bs,
-    total_usd:     body.total_usd,
-    customer_name: body.customer_name ?? null,
+  const sale = await prisma.sale.create({
+    data: {
+      productId:    body.productId    ?? null,
+      productName:  body.productName,
+      quantity:     body.quantity,
+      unit:         body.unit,
+      priceUsd:     body.priceUsd,
+      bcvRate:      body.bcvRate,
+      profitUsd:    body.profitUsd,
+      totalBs:      body.totalBs,
+      totalUsd:     body.totalUsd,
+      customerName: body.customerName ?? null,
+      soldAt:       new Date(),
+    },
   });
-
-  const created = db.prepare('SELECT * FROM sales WHERE id = ?').get(result.lastInsertRowid);
-  return ok(created, 201);
+  return ok(sale, 201);
 }

@@ -1,73 +1,22 @@
 // Thin fetch wrapper — all UI components use these functions instead of raw fetch
-import type { Product, Sale, Settings, BcvState, Unit } from './types';
+import type { Product, Sale, Settings, BcvState } from './types';
 
-// ─── Types that mirror the DB column names ──────────────────────────────────
-
-interface DbProduct {
-  id: number;
-  name: string;
-  price_usd: number;
-  custom_profit: number | null;
-  unit: Unit;
-  created_at: string;
-}
-
-interface DbSale {
-  id: number;
-  product_id: number | null;
-  product_name: string;
-  quantity: number;
-  unit: Unit;
-  price_usd: number;
-  bcv_rate: number;
-  profit_usd: number;
-  total_bs: number;
-  total_usd: number;
-  customer_name: string | null;
-  sold_at: string;
-}
-
-interface DbSettings { general_profit: string }
+// Prisma returns camelCase already; only dates need parsing (JSON has no Date type)
+type ProductJson = Omit<Product, 'createdAt'> & { createdAt: string };
+type SaleJson    = Omit<Sale,    'soldAt'>    & { soldAt:    string };
 
 interface BcvApiResult { rate: number; fetched_at: string; stale: boolean }
+interface DbSettings   { general_profit: string }
 
-// ─── Mappers: DB rows → app types ──────────────────────────────────────────
-
-function mapProduct(r: DbProduct): Product {
-  return {
-    id:           r.id,
-    name:         r.name,
-    priceUsd:     r.price_usd,
-    customProfit: r.custom_profit,
-    unit:         r.unit,
-    createdAt:    new Date(r.created_at),
-  };
-}
-
-function mapSale(r: DbSale): Sale {
-  return {
-    id:           r.id,
-    productId:    r.product_id,
-    productName:  r.product_name,
-    quantity:     r.quantity,
-    unit:         r.unit,
-    priceUsd:     r.price_usd,
-    bcvRate:      r.bcv_rate,
-    profitUsd:    r.profit_usd,
-    totalBs:      r.total_bs,
-    totalUsd:     r.total_usd,
-    customerName: r.customer_name,
-    soldAt:       new Date(r.sold_at),
-  };
-}
+function mapProduct(r: ProductJson): Product { return { ...r, createdAt: new Date(r.createdAt) }; }
+function mapSale(r: SaleJson):       Sale    { return { ...r, soldAt:    new Date(r.soldAt)    }; }
 
 // ─── Products ───────────────────────────────────────────────────────────────
 
 export async function fetchProducts(): Promise<Product[]> {
   const res = await fetch('/api/products');
   if (!res.ok) throw new Error('Error al cargar productos');
-  const data: DbProduct[] = await res.json();
-  return data.map(mapProduct);
+  return (await res.json() as ProductJson[]).map(mapProduct);
 }
 
 export async function createProduct(data: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
@@ -75,10 +24,10 @@ export async function createProduct(data: Omit<Product, 'id' | 'createdAt'>): Pr
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({
-      name:          data.name,
-      price_usd:     data.priceUsd,
-      custom_profit: data.customProfit,
-      unit:          data.unit,
+      name:         data.name,
+      priceUsd:     data.priceUsd,
+      customProfit: data.customProfit,
+      unit:         data.unit,
     }),
   });
   if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
@@ -90,10 +39,10 @@ export async function updateProduct(id: number, data: Partial<Omit<Product, 'id'
     method:  'PUT',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({
-      name:          data.name,
-      price_usd:     data.priceUsd,
-      custom_profit: data.customProfit,
-      unit:          data.unit,
+      name:         data.name,
+      priceUsd:     data.priceUsd,
+      customProfit: data.customProfit,
+      unit:         data.unit,
     }),
   });
   if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
@@ -110,8 +59,7 @@ export async function deleteProduct(id: number): Promise<void> {
 export async function fetchSales(): Promise<Sale[]> {
   const res = await fetch('/api/sales');
   if (!res.ok) throw new Error('Error al cargar historial');
-  const data: DbSale[] = await res.json();
-  return data.map(mapSale);
+  return (await res.json() as SaleJson[]).map(mapSale);
 }
 
 export async function createSale(data: Omit<Sale, 'id'>): Promise<Sale> {
@@ -119,16 +67,16 @@ export async function createSale(data: Omit<Sale, 'id'>): Promise<Sale> {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({
-      product_id:    data.productId,
-      product_name:  data.productName,
-      quantity:      data.quantity,
-      unit:          data.unit,
-      price_usd:     data.priceUsd,
-      bcv_rate:      data.bcvRate,
-      profit_usd:    data.profitUsd,
-      total_bs:      data.totalBs,
-      total_usd:     data.totalUsd,
-      customer_name: data.customerName,
+      productId:    data.productId,
+      productName:  data.productName,
+      quantity:     data.quantity,
+      unit:         data.unit,
+      priceUsd:     data.priceUsd,
+      bcvRate:      data.bcvRate,
+      profitUsd:    data.profitUsd,
+      totalBs:      data.totalBs,
+      totalUsd:     data.totalUsd,
+      customerName: data.customerName,
     }),
   });
   if (!res.ok) throw new Error('Error al registrar venta');
