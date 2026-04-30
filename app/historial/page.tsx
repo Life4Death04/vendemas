@@ -118,7 +118,8 @@ export default function HistorialPage() {
                         <span className="text-sm text-subtle">{formatTime(sale.soldAt)}</span>
                       </div>
                       <p className="text-xs text-subtle mt-1">
-                        Tasa: {sale.bcvRate.toFixed(2)} Bs/$ · Ganancia: {sale.profitBs.toFixed(2)} Bs
+                        Tasa: {sale.bcvRate.toFixed(2)} Bs/$ · Ganancia: {formatUsd(sale.profitUsd)}
+                        {sale.customerName && <> · <span className="text-muted">{sale.customerName}</span></>}
                       </p>
                     </div>
                   );

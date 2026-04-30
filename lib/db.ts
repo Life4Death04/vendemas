@@ -42,17 +42,18 @@ const SCHEMA = `
   );
 
   CREATE TABLE IF NOT EXISTS sales (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    product_id   INTEGER,
-    product_name TEXT    NOT NULL,
-    quantity     REAL    NOT NULL,
-    unit         TEXT    NOT NULL,
-    price_usd    REAL    NOT NULL,
-    bcv_rate     REAL    NOT NULL,
-    profit_bs    REAL    NOT NULL,
-    total_bs     REAL    NOT NULL,
-    total_usd    REAL    NOT NULL,
-    sold_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id    INTEGER,
+    product_name  TEXT    NOT NULL,
+    quantity      REAL    NOT NULL,
+    unit          TEXT    NOT NULL,
+    price_usd     REAL    NOT NULL,
+    bcv_rate      REAL    NOT NULL,
+    profit_usd    REAL    NOT NULL,
+    total_bs      REAL    NOT NULL,
+    total_usd     REAL    NOT NULL,
+    customer_name TEXT,
+    sold_at       TEXT    NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
   );
 
@@ -73,9 +74,9 @@ const SCHEMA = `
 const SEED_PRODUCTS = [
   { name: 'Jamón',          price_usd: 8.50,  custom_profit: null, unit: 'kg'     },
   { name: 'Queso Blanco',   price_usd: 4.00,  custom_profit: null, unit: 'kg'     },
-  { name: 'Mortadela',      price_usd: 5.50,  custom_profit: 15,   unit: 'kg'     },
+  { name: 'Mortadela',      price_usd: 5.50,  custom_profit: 1.5,  unit: 'kg'     },
   { name: 'Queso Amarillo', price_usd: 6.00,  custom_profit: null, unit: 'kg'     },
-  { name: 'Pernil',         price_usd: 12.00, custom_profit: 30,   unit: 'kg'     },
+  { name: 'Pernil',         price_usd: 12.00, custom_profit: 3.0,  unit: 'kg'     },
   { name: 'Agua Mineral',   price_usd: 0.80,  custom_profit: null, unit: 'litro'  },
 ];
 
@@ -86,6 +87,15 @@ export function initDb(): void {
 
   // Apply schema
   db.exec(SCHEMA);
+
+  // Migrations (idempotent — guarded by column existence checks)
+  const saleColumns = (db.prepare("PRAGMA table_info(sales)").all() as { name: string }[]).map(c => c.name);
+  if (saleColumns.includes('profit_bs') && !saleColumns.includes('profit_usd')) {
+    db.exec('ALTER TABLE sales RENAME COLUMN profit_bs TO profit_usd');
+  }
+  if (!saleColumns.includes('customer_name')) {
+    db.exec('ALTER TABLE sales ADD COLUMN customer_name TEXT');
+  }
 
   // Seed default settings
   db.prepare(`INSERT OR IGNORE INTO settings (key, value) VALUES ('general_profit', '20')`).run();

@@ -15,9 +15,10 @@ export interface Sale {
   unit: Unit;
   priceUsd: number;
   bcvRate: number;
-  profitBs: number;
+  profitUsd: number;
   totalBs: number;
   totalUsd: number;
+  customerName: string | null;
   soldAt: Date;
 }
 

@@ -55,7 +55,7 @@ export default function AjustesPage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-2">Precios</p>
           <div className="bg-surface border border-border rounded-xl p-4">
             <p className="text-base font-bold text-text mb-1">Ganancia general</p>
-            <p className="text-sm text-muted mb-4">Se aplica a productos sin ganancia personalizada</p>
+            <p className="text-sm text-muted mb-4">En dólares por unidad. Se aplica a productos sin ganancia personalizada</p>
 
             <div className="relative mb-2">
               <input
@@ -71,7 +71,7 @@ export default function AjustesPage() {
                     : 'border-border focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,86,219,.12)]'
                 } ${profitShake ? 'animate-shake' : ''}`}
               />
-              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xl font-bold text-muted pointer-events-none">Bs</span>
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xl font-bold text-muted pointer-events-none">$</span>
             </div>
             {profitError && <p className="text-danger text-[13px] mb-3">{profitError}</p>}
 
